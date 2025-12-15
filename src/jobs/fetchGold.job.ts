@@ -1,13 +1,19 @@
-import { getGoldPrice } from "../services/gold.service";
+import { fetchGoldUsdFromApi } from "../services/goldFetcher.service";
 import {saveLine} from "../db/fileDb";
+import {saveGoldLatest} from "../db/gold.store";
 
 export async function fetchGoldJob() {
-    console.log("[GOLD FETCH] calling goldapi.io :");
-    try{
-        const gold = await getGoldPrice();
-        console.log("[GOLD OK]", gold);
+    try {
+        const gold = await fetchGoldUsdFromApi();
         saveLine("data/gold.jsonl", gold);
-    } catch {
-
+        saveGoldLatest({
+            base: "USD",
+            usd: gold.usd,
+            converted: {}, // computed at read time
+            timestamp: gold.timestamp
+        });
+        console.log("[GOLD SAVED]", gold);
+    } catch (e) {
+        console.error("[GOLD ERROR]", e);
     }
 }
