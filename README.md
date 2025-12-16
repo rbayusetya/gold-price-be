@@ -1,19 +1,16 @@
-# Gold Price Tracker Backend
+# Gold & FX Price Backend
 
-A small **TypeScript + Fastify** backend that periodically fetches **gold prices (USD)** and **USD→IDR FX rates**, stores them in simple text files, and exposes data for future graphing.
-
-Designed as a **learning-focused side project** with a clean separation between API and cron workers.
-
+A Node.js + TypeScript backend that fetches gold prices and foreign exchange (FX) rates using cron jobs, 
+stores the results locally, and serves fast, cache-only APIs, designed to avoid calling external APIs during HTTP requests.
 ---
 
 ## Features
 
-* Fastify API (TypeScript, type-safe)
-* Background cron worker (separate process)
-* Gold price fetching (goldapi.io)
-* FX rate fetching (Frankfurter, no API key)
-* Quota-safe cron scheduling
-* Simple append-only text storage (JSONL)
+* Cron-based data fetching
+* Gold price in USD with FX-based conversion
+* Multi-currency support (USD, IDR, etc.)
+* File-based persistence
+* Fully type-safe (TypeScript)
 
 ---
 
@@ -31,16 +28,25 @@ Designed as a **learning-focused side project** with a clean separation between 
 
 ```
 src/
-├─ api/            # HTTP routes
-├─ services/       # Business logic (FX, gold)
-├─ jobs/           # Cron jobs
-├─ db/             # Simple file storage
-├─ cron.ts         # Cron worker entry
-└─ app.ts          # API server entry
-
-data/
-├─ fx.jsonl
-└─ gold.jsonl
+├── api/
+│   ├── gold.route.ts
+│   └── fx.route.ts
+├── jobs/
+│   ├── fetchGold.job.ts
+│   └── fetchFx.job.ts
+├── services/
+│   ├── goldFetcher.service.ts  
+│   ├── fxFetcher.service.ts     
+│   ├── goldFx.service.ts        
+│   └── currency.service.ts     
+├── db/
+│   ├── gold.store.ts
+│   └── fx.store.ts
+├── config/
+│   ├── currency.ts
+│   └── fx.ts
+├── cron.ts
+└── app.ts
 ```
 
 ---
@@ -59,7 +65,6 @@ Create a `.env` file:
 
 ```
 GOLD_API_KEY=your_goldapi_key
-GOLD_FETCH_MODE=manual
 NODE_ENV=development
 ```
 
@@ -98,12 +103,6 @@ Runs:
 src/cron.ts
 ```
 
-Cron behavior:
-
-* FX → every **5 minutes** (10s in dev)
-* Gold → **daily** (or manual in dev)
-* Immediate first run on startup
-
 ---
 
 ## Development Notes
@@ -114,27 +113,3 @@ Cron behavior:
 * Data stored as JSON Lines (`.jsonl`) for easy parsing
 
 ---
-
-## Example Logs
-
-```
-[CRON] initial run
-[FX OK] { rate: 16652 }
-[GOLD OK] { usd: 4299.39 }
-[CRON][FX] tick
-```
-
----
-
-## Next Steps
-
-* Expose `/api/latest`
-* Aggregate data for charts
-* Migrate storage to SQLite
-* Add retries and backoff
-
----
-
-## License
-
-MIT
